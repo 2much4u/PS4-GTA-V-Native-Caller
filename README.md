@@ -27,6 +27,8 @@ Since the functions in this payload are copied into gta at a static address, mul
 
 
 ## Miscellaneous Notes
+### Natives
+Only a few natives are defined in `natives.h`, just copied the ones needed for the simple mod menu v1.0. Defining any more is easy enough.
 ### Buttons
 Button ID's for PS4 were different than last gen and PC so a simple mapping of them is included. `Button_Tpad_X` and `Button_Tpad_Y` can be used with the natives `GET_CONTROL_VALUE` and `GET_CONTROL_NORMAL` for touch pad input. `Button_Tpad` is just for if the touch pad is pressed.
 ### Testing
