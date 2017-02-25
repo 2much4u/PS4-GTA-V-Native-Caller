@@ -18,7 +18,7 @@ As mentioned in the brief explanation, functions called from `nativeHook` must b
 Since `nativeHook` is copied to a different location, strings cannot be used inside it in the normal way. A simple way around this is to define them on the stack like:
 	
 	char helloWorld[] = { 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x0 };
-This seems strange but it is a bit of a trick with the compiler. The bytes for the string will be inside the function rather than the data segment of payload.
+This seems strange, but it is a bit of a trick with the compiler. The bytes for the string will be stored inside the function rather than the data segment of the payload.
 ### Global Variables
 Global variables have the same issue as strings. As previous mentioned, a good way to manage them is with a structure. However, there is not that much free space left at the address `gtaVars` and the native arg structure are declared at. For this reason, it is recommended to keep global variable usage to a minimum.
 ### Space
