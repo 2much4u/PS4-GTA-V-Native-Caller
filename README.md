@@ -19,7 +19,7 @@ As mentioned in the brief explanation, functions called from `nativeHook` must b
 ### Strings
 Since `nativeHook` is copied to a different location, strings cannot be used inside it in the normal way. A simple way around this is to define them on the stack like:
 	
-	const char helloWorld[] = "hellow world";
+	const char helloWorld[] = "hello world";
 This is necessary so the compiler does not put the string in the data segment.
 ### Global Variables
 Global variables have the same issue as strings. As previous mentioned, a good way to manage them is with a structure. However, there is not that much free space left at the address `gtaVars` and the native arg structure are declared at. For this reason, it is recommended to keep global variable usage to a minimum.
