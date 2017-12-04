@@ -175,12 +175,7 @@ enum uio_rw {
     UIO_READ,
     UIO_WRITE
 };
- 
-struct iovec {
-    void *iov_base;  /* Base address. */
-    size_t iov_len;    /* Length. */
-};
- 
+
 struct uio {
     struct iovec *uio_iov;         /* scatter/gather list */
     int uio_iovcnt;             /* length of scatter/gather list */
