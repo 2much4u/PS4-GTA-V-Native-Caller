@@ -21,7 +21,7 @@ LIBS	:=	-lPS4
 
 TARGET = $(shell basename $(CURDIR)).bin
 
-$(TARGET): $(ODIR) $(OBJS)
+$(TARGET): makeGtaPayload requiredClean $(ODIR) $(OBJS)
 	$(CC) $(LIBPS4)/crt0.s $(ODIR)/*.o -o temp.t $(CFLAGS) $(LFLAGS) $(LIBS)
 	$(OBJCOPY) -O binary temp.t $(TARGET)
 	rm -f temp.t
@@ -35,7 +35,13 @@ $(ODIR)/%.o: $(SDIR)/%.s
 $(ODIR):
 	@mkdir $@
 
-.PHONY: clean
+.PHONY: $(TARGET)
+
+makeGtaPayload:
+	$(MAKE) -C gtaPayload $?
+
+requiredClean:
+	rm -f $(TARGET) $(ODIR)/embed.o
 
 clean:
 	rm -f $(TARGET) $(ODIR)/*.o

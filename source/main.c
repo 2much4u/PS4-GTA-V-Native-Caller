@@ -3,8 +3,13 @@
 #include "proc.h"
 #include "gta.h"
 
+extern char gtaPayload[];
+extern int gtaPayloadSize;
+
 int gamePID;
 void* hookAddress;
+
+double(*ceil)(double x);
 
 #undef DEBUG
 #ifdef DEBUG
@@ -64,25 +69,33 @@ BOOL regionCheck() {
 BOOL setupDone() {
 	procAttach(gamePID);
 
-	void* executionSpace;
-	void* dataSpace;
-	procReadBytes(gamePID, baseVars, &executionSpace, sizeof(executionSpace));
-	procReadBytes(gamePID, &gtaVars, &dataSpace, sizeof(dataSpace));
+	BOOL allocationNeeded;
+	procReadBytes(gamePID, &gtaVars->allocationNeeded, &allocationNeeded, sizeof(allocationNeeded));
 
 	procDetach(gamePID);
-	return (executionSpace != 0) && (dataSpace != 0);
+	return !allocationNeeded;
 }
 
 void runSetup() {
 	procAttach(gamePID);
 
-	procWriteBytes(gamePID, PayloadAddress, _invokeNative, 0x100);
-	procWriteBytes(gamePID, PayloadAddress + 0x100, setupEnvironment, 0x1000);
+	BOOL allocationNeeded = TRUE;
+	procWriteBytes(gamePID, &gtaVars->allocationNeeded, &allocationNeeded, sizeof(allocationNeeded));
+
+	void* null = NULL;
+	procWriteBytes(gamePID, &gtaVars->executableSpace, &null, sizeof(null));
+	procWriteBytes(gamePID, &gtaVars->dataSpace, &null, sizeof(null));
+
+	int executableSize = (int)ceil((double)gtaPayloadSize / 0x4000) * 0x4000;
+	procWriteBytes(gamePID, &gtaVars->allocationSize, &executableSize, sizeof(executableSize));
+	debugPrint("Allocating 2 * 0x%llX bytes within GTA...\n", executableSize);
+
+	procWriteBytes(gamePID, PayloadAddress, nativeHook, 0x1000);
 
 	u8 syscallASM[] = { SyscallBytes };
 	procWriteBytes(gamePID, SyscallAddress, syscallASM, sizeof(syscallASM));
 
-	u8 hookASM[] = { SetupHookBytes };
+	u8 hookASM[] = { HookBytes };
 	procWriteBytes(gamePID, hookAddress, hookASM, sizeof(hookASM));
 
 	procDetach(gamePID);
@@ -91,12 +104,9 @@ void startExecution() {
 	procAttach(gamePID);
 
 	void* executableSpace;
-	procReadBytes(gamePID, baseVars, &executableSpace, sizeof(executableSpace));
-	
-	procWriteBytes(gamePID, executableSpace, nativeHook, ExecutableSpaceSize);
+	procReadBytes(gamePID, &gtaVars->executableSpace, &executableSpace, sizeof(executableSpace));
 
-	u8 hookASM[] = { ExecutionHookBytes };
-	procWriteBytes(gamePID, hookAddress, hookASM, sizeof(hookASM));
+	procWriteBytes(gamePID, executableSpace, gtaPayload, gtaPayloadSize);
 
 	procDetach(gamePID);
 }
@@ -105,7 +115,10 @@ int _main(void) {
 	initKernel();
 	initLibc();
 	initNetwork();
-		
+
+	int libc = sceKernelLoadStartModule("libSceLibcInternal.sprx", 0, NULL, 0, 0, 0);
+	RESOLVE(libc, ceil);
+
 	enableDebug();
 	debugPrint("Started payload\n");
 
@@ -125,15 +138,12 @@ int _main(void) {
 		return 0;
 	}
 
-	if (setupDone()) startExecution();
-	else {
-		debugPrint("Setting up environment...\n");
-		runSetup();
+	debugPrint("Setting up environment...\n");
+	runSetup();
 
-		while (!setupDone()) sceKernelSleep(3);
+	while (!setupDone()) sceKernelSleep(3);
 
-		startExecution();
-	}
+	startExecution();
 	debugPrint("Process patched\n");
 
 	debugPrint("Finished payload");
