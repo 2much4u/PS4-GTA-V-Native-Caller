@@ -18,7 +18,6 @@ struct NativeArg_s {
 };
 
 extern NativeArg_s nativeArg;
-extern u64 args[30];
 
 void callHash(u64 hash);
 void resetArgs();
