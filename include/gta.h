@@ -3,7 +3,6 @@
 #include "type.h"
 
 // Same for all regions
-#define NativeTableAddress (void*)0x3644A28
 #define PayloadAddress (void*)0x2B9D2B0
 #define GTAVarsAddress (void*)0x2DCDA30
 
