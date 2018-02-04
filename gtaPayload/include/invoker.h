@@ -23,17 +23,19 @@ void callHash(u64 hash);
 void resetArgs();
 
 template<typename T>
-inline void pushArg(T value)
-{
+inline void pushArg(T value) {
 	*(T*)&nativeArg.argValues[nativeArg.argCount] = value;
 	nativeArg.argCount++;
 }
 
 template<typename R>
-inline R getReturn()
-{
-	R* result = (R*)&nativeArg.returnValue[0];
-	return *(R*)result;
+inline R getReturn() {
+	return *(R*)&nativeArg.returnValue[0];
+}
+
+template <>
+inline Vector3 getReturn<Vector3>() {
+	return { *(float*)&nativeArg.returnValue[0], *(float*)&nativeArg.returnValue[1], *(float*)&nativeArg.returnValue[2] };
 }
 
 template<typename N, typename... A>

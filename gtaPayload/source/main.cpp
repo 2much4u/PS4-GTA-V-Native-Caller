@@ -1,5 +1,7 @@
+#include "lib.h"
 #include "natives.h"
 
+bool init = false;
 int frameCount = 0;
 
 void teleportPlayer(float x, float y, float z) {
@@ -12,6 +14,11 @@ void teleportPlayer(float x, float y, float z) {
 }
 
 extern "C" void _main(void) {
+	if (!init) {
+		initLibs();
+		init = true;
+	}
+
 	int newFrameCount = GAMEPLAY::GET_FRAME_COUNT();
 	if (newFrameCount > frameCount) {
 		frameCount = newFrameCount;
