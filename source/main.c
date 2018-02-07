@@ -10,38 +10,11 @@ int gamePID;
 void* hookAddress;
 
 double(*ceil)(double x);
+int(*sceSysUtilSendSystemNotificationWithText)(int messageType, char* message);
 
-#undef DEBUG
-#ifdef DEBUG
-int debugSock;
-
-#define debugPrint(format, ...)\
-		do {\
-			char buffer[512];\
-			int size = sprintf(buffer, format, ##__VA_ARGS__);\
-			sceNetSend(debugSock, buffer, size, 0);\
-		} while(0)\
-
-void enableDebug() {
-	char debugSocketName[] = "debug";
-	struct sockaddr_in debugServer;
-	debugServer.sin_len = sizeof(debugServer);
-	debugServer.sin_family = AF_INET;
-	debugServer.sin_addr.s_addr = IP(10, 0, 0, 60);
-	debugServer.sin_port = sceNetHtons(9024);
-	memset(debugServer.sin_zero, 0, sizeof(debugServer.sin_zero));
-	debugSock = sceNetSocket(debugSocketName, AF_INET, SOCK_STREAM, 0);
-	sceNetConnect(debugSock, (struct sockaddr *)&debugServer, sizeof(debugServer));
+void sysNotify(char* msg) {
+	sceSysUtilSendSystemNotificationWithText(222, msg);
 }
-
-void disableDebug() {
-	sceNetSocketClose(debugSock);
-}
-#else
-#define debugPrint(...)
-#define enableDebug()
-#define disableDebug()
-#endif
 
 BOOL regionCheck() {
 	procAttach(gamePID);
@@ -50,15 +23,15 @@ BOOL regionCheck() {
 	procReadBytes(gamePID, RegionCheckAddress, (void*)&gameCheck, sizeof(gameCheck));
 
 	if (gameCheck == USRegionBytes) {
-		debugPrint("US GTA V detected\n");
+		sysNotify("US GTA V detected.");
 		hookAddress = USHookAddress;
 	}
 	else if (gameCheck == EURegionBytes) {
-		debugPrint("EU GTA V detected\n");
+		sysNotify("EU GTA V detected.");
 		hookAddress = EUHookAddress;
 	}
 	else {
-		debugPrint("Failed to detect GTA V\n");
+		sysNotify("Failed to detect GTA V.");
 		procDetach(gamePID);
 		return FALSE;
 	}
@@ -88,7 +61,6 @@ void runSetup() {
 
 	int executableSize = (int)ceil((double)gtaPayloadSize / 0x4000) * 0x4000;
 	procWriteBytes(gamePID, &gtaVars->allocationSize, &executableSize, sizeof(executableSize));
-	debugPrint("Allocating 2 * 0x%llX bytes within GTA...\n", executableSize);
 
 	procWriteBytes(gamePID, PayloadAddress, nativeHook, 0x1000);
 
@@ -114,40 +86,31 @@ void startExecution() {
 int _main(void) {
 	initKernel();
 	initLibc();
-	initNetwork();
+
+	kexec(kernelPayload, NULL);
 
 	int libc = sceKernelLoadStartModule("libSceLibcInternal.sprx", 0, NULL, 0, 0, 0);
 	RESOLVE(libc, ceil);
 
-	enableDebug();
-	debugPrint("Started payload\n");
+	int sysUtil = sceKernelLoadStartModule("/system/common/lib/libSceSysUtil.sprx", 0, NULL, 0, 0, 0);
+	RESOLVE(sysUtil, sceSysUtilSendSystemNotificationWithText);
 
-	kexec(kernelPayload, NULL);
-	debugPrint("Kernel patched\n");
-
-	debugPrint("Searching for EBOOT...\n");
+	sysNotify("Payload loaded.\nPlease launch GTA V.");
 	gamePID = findProcess("eboot.bin");
-	debugPrint("Found EBOOT at PID: %i\n", gamePID);
 
 	sceKernelSleep(3);
 
 	if (!regionCheck()) {
-		debugPrint("Finished payload");
-		disableDebug();
-
 		return 0;
 	}
 
-	debugPrint("Setting up environment...\n");
+	sysNotify("Setting up environment.");
 	runSetup();
 
 	while (!setupDone()) sceKernelSleep(3);
 
 	startExecution();
-	debugPrint("Process patched\n");
-
-	debugPrint("Finished payload");
-	disableDebug();
+	sysNotify("Mods activated.\nEnjoy!");
 
 	return 0;
 }
