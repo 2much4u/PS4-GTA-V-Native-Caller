@@ -12,15 +12,20 @@ struct Native_s {
 
 struct NativeArg_s {
 	u64* returnValue;
-	short argCount;
+	u32 argCount;
+	u8 padding1[4];
 	u64* argValues;
-	short readCount;
+	u32 vectorCount;
+	u8 padding2[4];
+	Vector3* argVectors[4];
+	Vector4 tempVectors[4];
 };
 
 extern NativeArg_s nativeArg;
 
 void callHash(u64 hash);
 void resetArgs();
+void setVectors();
 
 template<typename T>
 inline void pushArg(T value) {
@@ -33,16 +38,12 @@ inline R getReturn() {
 	return *(R*)&nativeArg.returnValue[0];
 }
 
-template <>
-inline Vector3 getReturn<Vector3>() {
-	return { *(float*)&nativeArg.returnValue[0], *(float*)&nativeArg.returnValue[1], *(float*)&nativeArg.returnValue[2] };
-}
-
 template<typename N, typename... A>
 N invoke(u64 hash, A &&... args)
 {
 	resetArgs();
 	int dummy[] = { 0, ((void)pushArg(std::forward<A>(args)), 0) ... };
 	callHash(hash);
+	setVectors();
 	return getReturn<N>();
 }

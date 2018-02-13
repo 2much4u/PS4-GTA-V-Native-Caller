@@ -2,9 +2,9 @@
 
 typedef unsigned char u8;
 typedef unsigned short u16;
-typedef unsigned long u32;
+typedef unsigned int u32;
 typedef unsigned long long u64;
-typedef unsigned int size_t;
+typedef unsigned long int size_t;
 
 typedef void* Void;
 typedef int Any;
@@ -35,11 +35,19 @@ typedef int Sphere;
 typedef int ScrHandle;
 
 typedef struct {
-	float x, y, z;
+	float x, y;
+} Vector2;
+
+typedef struct {
+	float x, _padX, y, _padY, z, _padZ;
 } Vector3;
 
 typedef struct {
-	u8 r, g, b, a;
+	float x, y, z, w;
+} Vector4;
+
+typedef struct {
+	int r, g, b, a;
 } Color;
 
 enum Buttons {
