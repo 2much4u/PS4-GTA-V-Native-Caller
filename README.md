@@ -1,5 +1,5 @@
 # PS4 GTA V Native Caller
-A simple example of calling natives on PS4 GTA V using [Vortex's adaptation of CTurt's PS4 SDK](https://github.com/xvortex/ps4-payload-sdk).
+A simple example of calling natives on PS4 GTA V using [idc's adaptation of CTurt's PS4 SDK](https://github.com/idc/ps4-payload-sdk).
 
 
 ## Brief Explanation
