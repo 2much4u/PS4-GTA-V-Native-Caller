@@ -27,4 +27,4 @@ extern char *(*strstr)(char *str1, char *str2);
 extern int(*atoi)(const char * str);
 extern double(*atof)(const char * str);
 
-void initLibs();
+extern void initLibs();
