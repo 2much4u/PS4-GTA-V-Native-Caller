@@ -7,7 +7,6 @@ extern char gtaPayload[];
 extern int gtaPayloadSize;
 
 int gamePID;
-void* hookAddress;
 
 double(*ceil)(double x);
 int(*sceSysUtilSendSystemNotificationWithText)(int messageType, char* message);
@@ -16,28 +15,32 @@ void sysNotify(char* msg) {
 	sceSysUtilSendSystemNotificationWithText(222, msg);
 }
 
-BOOL regionCheck() {
+BOOL gameCheck() {
 	procAttach(gamePID);
 
-	u64 gameCheck;
-	procReadBytes(gamePID, RegionCheckAddress, (void*)&gameCheck, sizeof(gameCheck));
+	u64 testBytes;
+	procReadBytes(gamePID, GameCheckAddress, (void*)&testBytes, sizeof(testBytes));
 
-	if (gameCheck == USRegionBytes) {
-		sysNotify("US GTA V detected.");
-		hookAddress = USHookAddress;
-	}
-	else if (gameCheck == EURegionBytes) {
-		sysNotify("EU GTA V detected.");
-		hookAddress = EUHookAddress;
-	}
-	else {
+	BOOL success = FALSE;
+	switch (testBytes)
+	{
+	case GameCheck127Bytes:
+		sysNotify("1.27 GTA V detected.");
+		success = TRUE;
+		break;
+	case GameCheck100USBytes:
+		sysNotify("1.00 US GTA V detected.\nThis payload can only be used on 1.27 GTA V.");
+		break;
+	case GameCheck100EUBytes:
+		sysNotify("1.00 EU GTA V detected.\nThis payload can only be used on 1.27 GTA V.");
+		break;
+	default:
 		sysNotify("Failed to detect GTA V.");
-		procDetach(gamePID);
-		return FALSE;
+		break;
 	}
 
 	procDetach(gamePID);
-	return TRUE;
+	return success;
 }
 BOOL setupDone() {
 	procAttach(gamePID);
@@ -68,7 +71,7 @@ void runSetup() {
 	procWriteBytes(gamePID, SyscallAddress, syscallASM, sizeof(syscallASM));
 
 	u8 hookASM[] = { HookBytes };
-	procWriteBytes(gamePID, hookAddress, hookASM, sizeof(hookASM));
+	procWriteBytes(gamePID, HookAddress, hookASM, sizeof(hookASM));
 
 	procDetach(gamePID);
 }
@@ -100,7 +103,7 @@ int _main(void) {
 
 	sceKernelSleep(3);
 
-	if (!regionCheck()) {
+	if (!gameCheck()) {
 		return 0;
 	}
 

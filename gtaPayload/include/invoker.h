@@ -3,13 +3,6 @@
 #include "types.h"
 #include <utility>
 
-struct Native_s {
-	struct Native_s *lastNativeTable;
-	u64 nativeFunctions[7];
-	u64 nativeCount;
-	u64 nativeHashes[7];
-};
-
 struct NativeArg_s {
 	u64* returnValue;
 	u32 argCount;
@@ -23,9 +16,8 @@ struct NativeArg_s {
 
 extern NativeArg_s nativeArg;
 
-void callHash(u64 hash);
-void resetArgs();
-void setVectors();
+extern void resetArgs();
+extern void setVectors();
 
 template<typename T>
 inline void pushArg(T value) {
@@ -39,11 +31,11 @@ inline R getReturn() {
 }
 
 template<typename N, typename... A>
-N invoke(u64 hash, A &&... args)
+N invoke(u64 nativeAddress, A &&... args)
 {
 	resetArgs();
 	int dummy[] = { 0, ((void)pushArg(std::forward<A>(args)), 0) ... };
-	callHash(hash);
+	((void(*)(NativeArg_s*))(void*)nativeAddress)(&nativeArg);
 	setVectors();
 	return getReturn<N>();
 }

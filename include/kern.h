@@ -59,4 +59,4 @@ struct thread {
 	struct proc *td_proc;
 };
 
-int kernelPayload(struct thread *td, void* uap);
+extern int kernelPayload(struct thread *td, void* uap);

@@ -1,6 +1,6 @@
 #include "lib.h"
 
-u64 (*syscall)(int num, ...) = (void*)0x2B9D28C;
+u64 (*syscall)(int num, ...) = (void*)0x31B616C;
 #define resolve(module, name) syscall(591, module, #name, &name);
 
 void *(*malloc)(size_t size);
